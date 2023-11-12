@@ -7,7 +7,7 @@ dif[u_][vars_] := If[Length[vars] == 0, u, Subscript[u, Row@Sort@vars]]
 xx[{spaceX_, spaceU_}][i_] := Indexed[spaceX, i]
 uu[{spaceX_, spaceU_}][\[Alpha]_] := Indexed[spaceU, \[Alpha]]
 
-applyVect2Fn[vect_][f_] := vect /. expr_ * Subscript[d, a_] :> expr * D[f, a]
+applyVect2Fn[vectX_][f_] := Together[vectX /. expr_ * Subscript[d, a_] :> expr * D[f, a]]
 applyVect2Vect[vectX_][vectY_] := vectY /. expr_ * Subscript[d, a_] :> applyVect2Fn[vectX][expr] * Subscript[d, a]
 lieBracket[vectX_, vectY_] := applyVect2Vect[vectX][vectY] - applyVect2Vect[vectY][vectX]
 
@@ -64,16 +64,20 @@ pr[spaceZ_, k_][vectX_] := With[{
   eta = tmpVect2\[Eta][spaceZ]@vectX
 }, tmp\[Xi]2Vect[spaceZ][xi] + tmp\[Eta]2Vect[spaceZ][eta] + Total@Table[tmpPr[spaceZ][vectX][p], {p, 1, k}]]
 
+tmpTransformVectMapItem[vectX_][Rule[yi_, expr_]] := applyVect2Fn[vectX][expr] d[yi]
+transformVect[{coordTransformTo_, coordTransformFrom_}][vectX_] :=
+  Total[tmpTransformVectMapItem[vectX] /@ coordTransformTo] /. coordTransformFrom
+
 (* ? module end *)
 
-(* ? samples *)
+(* * samples *)
 
 sampleSpaceZxyzuv = {{x, y, z}, {u, v}};
 sampleSpaceZxu = {{x}, {u}};
 sampleSpaceZxyu = {{x, y}, {u}};
 
 (* ** *)
-Print@"Переменные"
+Print@"переменные"
 Print@{d[x], d[u], dif[u][{}], u == dif[u][{}], dif[u][{y, x}], d@dif[u]@{x, y}}
 Print@@{xx[sampleSpaceZxyzuv] /@ {1, 2, 3}, uu[sampleSpaceZxyzuv] /@ {1, 2}}
 (* ** *)
@@ -81,9 +85,24 @@ Print@"скобка Ли"
 Print[applyVect2Fn[x d[x] + 2 y d[y] + 3 z d[z]]@(2 x^6 - 5 y^3 + z^2)]
 Print@{applyVect2Vect[x d[y]][-y d[x] + x d[y]]}
 Print@{lieBracket[-y d[x] + x d[y], -z d[y] + y d[z]], -z d[x] + x d[z]}
+Print@{lieBracket[d[y] - (y/z) d[z], d[x] - (x/z) d[z]]} (* * [Головин стр. 48] *)
 (* ** *)
 Print@"продолжение оператора"
 Print@{pr[sampleSpaceZxu, 2]@{u d[x] - x d[u]}, pr[sampleSpaceZxyu, 2]@{y d[x] - x d[y]}}
 (* ** *)
+Print@"замена координат"
+sampleCoordTransformPolar = {
+  {r -> Sqrt[x^2 + y^2], \[Theta] -> ArcTan[y/x]},
+  {x -> r Cos[\[Theta]], y -> r Sin[\[Theta]]}
+};
+Print@transformVect[sampleCoordTransformPolar][-y d[x] + x d[y]]
+(* ** *)
+Print@"[Головин стр. 48]"
+sampleCoordTransformEx1 = {
+  {y1 -> y, y2 -> x, y3 -> Sqrt[y^2 + z^2]},
+  {x -> y2, y -> y1, z -> Sqrt[y3^2 - y1^2]}
+};
+Print[transformVect[sampleCoordTransformEx1]/@{d[y] - (y/z) d[z], d[x] - (x/z) d[z]}]
+(* ** *)
 
-(* ? samples end *)
+(* * samples end *)
