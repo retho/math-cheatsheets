@@ -4,10 +4,10 @@
 
 (* print[v_] := Print[v /. (ScalarMulD[expr_, a_] :> expr * Subscript[d, a])] *)
 
-d[a_] := 1 \[CenterDot] Subscript[d, a];
+d[v_] := 1 \[CenterDot] Subscript[d, v];
 
+vect[a_ * Plus[xs__]] := vect@Plus[a * #& /@ xs]
 vect[expr_] := expr /. {
-  c_ * Subscript[d, a_] :> c \[CenterDot] Subscript[d, a],
   c1_ * (c2_ \[CenterDot] Subscript[d, a_]) :> (c1 * c2) \[CenterDot] Subscript[d, a]
 }
 
@@ -84,6 +84,18 @@ tmpTransformVectMapItem[vectX_][Rule[yi_, expr_]] := applyVect2Fn[vectX][expr] \
 transformVect[{coordTransformTo_, coordTransformFrom_}][vectX_] :=
   Total[tmpTransformVectMapItem[vectX] /@ coordTransformTo] /. coordTransformFrom
 
+tmpExpAllVars[_ \[CenterDot] Subscript[d, v_]] := {v}
+tmpExpAllVars[Plus[xs__]] := Join@@(tmpExpAllVars /@ List@@xs)
+tmpExpEqnsFn[vectX_, a_][v_] := OverBar[v]'[a] == (tmpCoord[vectX][v] /. (# -> OverBar[#][a]& /@ tmpExpAllVars[vectX]))
+tmpExpEqnsGn[v_] := OverBar[v][0] == v
+tmpExpEqns[vectX_, a_] := With[{
+  allVars = tmpExpAllVars[vectX]
+}, Join@@{tmpExpEqnsFn[vectX, a] /@ allVars, tmpExpEqnsGn /@ allVars}]
+tmpExpSolve[vectX_, a_] := Join@@DSolve[tmpExpEqns[vectX, a], OverBar[#]& /@ tmpExpAllVars[vectX], a]
+tmpExp[expr_ \[CenterDot] Subscript[d, a]] := 14
+(* ** *)
+exp[vectX_] := tmpExpSolve[vectX, $tmpVarA$] /. (OverBar[v_] -> Function[{$tmpVarA$}, expr_]) :> (v -> (expr /. $tmpVarA$ -> 1))
+
 (* ? module end *)
 
 (* * samples *)
@@ -99,7 +111,7 @@ Print@{xx[sampleSpaceZxyzuv] /@ {1, 2, 3}, uu[sampleSpaceZxyzuv] /@ {1, 2}}
 Print@vect@(-y d[x] + x d[y])
 (* ** *)
 Print@"скобка Ли"
-Print[applyVect2Fn[vect@(x d[x] + 2 y d[y] + 3 z d[z])]@(2 x^6 - 5 y^3 + z^2)]
+Print[applyVect2Fn[vect@(x d[x] + 2 y d[y] + 3 z d[z])]@(2 x^6 - 5 y^3 + z^2)] (* * [Головин стр. 10] *)
 Print@{applyVect2Vect[vect@(x d[y])][vect@(-y d[x] + x d[y])]}
 Print@{lieBracket[vect@(-y d[x] + x d[y]), vect@(-z d[y] + y d[z])], vect@(-z d[x] + x d[z])}
 Print@lieBracket[vect@(d[y] - (y/z) d[z]), vect@(d[x] - (x/z) d[z])] (* * [Головин стр. 48] *)
@@ -119,6 +131,10 @@ Print[transformVect[sampleCoordTransformEx1]/@vect/@{d[y] - (y/z) d[z], d[x] - (
 Print@"продолжение оператора"
 Print@{pr[sampleSpaceZxu, 2]@vect@(d[x]), pr[sampleSpaceZxyu, 2]@vect@(d[u])}
 Print@{pr[sampleSpaceZxu, 2]@vect@(u d[x] - x d[u]), pr[sampleSpaceZxyu, 2]@vect@(y d[x] - x d[y])}
+(* ** *)
+Print@"exp: g -> G"
+Print@exp@vect[-y d[x] + x d[y]]
+Print@exp@vect[a * vect[y d[x] - x d[y] + d[z]]] (* * [Головин стр. 8] *)
 (* ** *)
 
 (* * samples end *)
