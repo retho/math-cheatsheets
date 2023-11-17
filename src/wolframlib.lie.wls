@@ -5,16 +5,14 @@
 (* print[v_] := Print[v /. (ScalarMulD[expr_, a_] :> expr * Subscript[d, a])] *)
 
 d[v_] := 1 \[CenterDot] Subscript[d, v];
-
-vect[a_ * Plus[xs__]] := vect@Plus[a * #& /@ xs]
-vect[expr_] := expr /. {
-  c1_ * (c2_ \[CenterDot] Subscript[d, a_]) :> (c1 * c2) \[CenterDot] Subscript[d, a]
-}
-
 (* * https://mathematica.stackexchange.com/questions/274911/how-to-define-an-operator-like-%E2%8A%95 *)
 a_ \[CenterDot] b_ \[CenterDot] c__ := (a * b) \[CenterDot] c; (* * умножение вектора на скаляр *)
 CenterDot[a_, CenterDot[b_, c_]] := CenterDot[a b, c]
 0 \[CenterDot] _ := 0
+
+vect[expr_] := expr /. {
+  c1_ * (c2_ \[CenterDot] Subscript[d, a_]) :> (c1 * c2) \[CenterDot] Subscript[d, a]
+}
 
 dif[u_][vars_] := If[Length[vars] == 0, u, Subscript[u, Row@Sort@vars]]
 xx[{spaceX_, spaceU_}][i_] := Indexed[spaceX, i]
@@ -96,6 +94,16 @@ tmpExp[expr_ \[CenterDot] Subscript[d, a]] := 14
 (* ** *)
 exp[vectX_] := tmpExpSolve[vectX, $tmpVarA$] /. (OverBar[v_] -> Function[{$tmpVarA$}, expr_]) :> (v -> (expr /. $tmpVarA$ -> 1))
 
+tmpTransformGetAllVars[T_] := T /. (v_ -> _) :> v
+(* ** *)
+T1_ \[SmallCircle] T2_ \[SmallCircle] Ts__ := (T1 \[SmallCircle] T2) \[SmallCircle] SmallCircle@@Ts
+SmallCircle[T_] := T
+T1_ \[SmallCircle] T2_ := With[{
+  vars1 = tmpTransformGetAllVars[T1],
+  vars2 = tmpTransformGetAllVars[T2]
+(* }, (Union[vars1, vars2] /. T2) /. T1] *)
+}, # -> Simplify[((# /. T2) /. T1)]& /@ Union[vars1, vars2]]
+
 (* ? module end *)
 
 (* * samples *)
@@ -134,7 +142,16 @@ Print@{pr[sampleSpaceZxu, 2]@vect@(u d[x] - x d[u]), pr[sampleSpaceZxyu, 2]@vect
 (* ** *)
 Print@"exp: g -> G"
 Print@exp@vect[-y d[x] + x d[y]]
-Print@exp@vect[a * vect[y d[x] - x d[y] + d[z]]] (* * [Головин стр. 8] *)
+Print@(vect[x d[x]])
+(* Print@(a \[CenterDot] vect[x d[x]]) *)
+(* Print@{exp@(a \[CenterDot] vect[d[x]]), exp@(a \[CenterDot] vect[x d[x]])} *)
+Print@exp[a \[CenterDot] vect@(y d[x] - x d[y] + d[z])] (* * [Головин стр. 8] *)
+sampleR[a_, b_] := vect[-b d[a] + a d[b]]
+(* Print@{exp@vect[a * sampleR[x, y]], exp@vect[b * sampleR[x, y]], exp@vect[a * sampleR[x, y]] \[SmallCircle] exp@vect[b * sampleR[x, y]]} *)
+Print@{a \[CenterDot] vect@(d[x])}
+(* Print@{exp[a \[CenterDot] vect[d[x]]], exp[b \[CenterDot] vect[x d[x]]]} *)
+(* Print@{exp@vect[a * vect@(d[x])], exp@vect[b * vect@(x d[x])]} *)
+(* Print@{exp@vect[a * vect@(d[x])], exp@vect[b * vect@(x d[x])], exp@vect[a * vect@(d[x])] \[SmallCircle] exp@vect[b * vect@(x d[x])], exp@vect[b * vect@(x d[x])] \[SmallCircle] exp@vect[a * vect@(d[x])]} *)
 (* ** *)
 
 (* * samples end *)
