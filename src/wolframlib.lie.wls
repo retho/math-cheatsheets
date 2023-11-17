@@ -106,7 +106,7 @@ T1_ \[SmallCircle] T2_ := With[{
   vars1 = tmpTransformGetAllVars[T1],
   vars2 = tmpTransformGetAllVars[T2]
 (* }, (Union[vars1, vars2] /. T2) /. T1] *)
-}, # -> Simplify[((# /. T2) /. T1)]& /@ Union[vars1, vars2]]
+}, # -> Simplify[(# /. T1 /. T2)]& /@ Union[vars1, vars2]]
 
 (* ? module end *)
 
@@ -157,6 +157,7 @@ Print@{
   exp@vect[b * vect@(x d[x])],
   exp@vect[a * vect@(d[x])] \[SmallCircle] exp@vect[b * vect@(x d[x])],
   exp@vect[b * vect@(x d[x])] \[SmallCircle] exp@vect[a * vect@(d[x])]
+  (* exp@vect[b * vect@(x d[x])] \[SmallCircle] exp@vect[a * vect@(d[x])] \[SmallCircle] exp@vect[b * vect@(x d[x])] *)
 }
 (* ** *)
 
