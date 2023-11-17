@@ -100,12 +100,11 @@ exp[vectX_] := tmpExpSolve[vectX, $tmpVarA$] /. (OverBar[v_] -> Function[{$tmpVa
 
 tmpTransformGetAllVars[T_] := T /. (v_ -> _) :> v
 (* ** *)
-T1_ \[SmallCircle] T2_ \[SmallCircle] Ts__ := (T1 \[SmallCircle] T2) \[SmallCircle] SmallCircle@@Ts
+T1_ \[SmallCircle] T2_ \[SmallCircle] Ts__ := (T1 \[SmallCircle] T2) \[SmallCircle] SmallCircle@Ts
 SmallCircle[T_] := T
 T1_ \[SmallCircle] T2_ := With[{
   vars1 = tmpTransformGetAllVars[T1],
   vars2 = tmpTransformGetAllVars[T2]
-(* }, (Union[vars1, vars2] /. T2) /. T1] *)
 }, # -> Simplify[(# /. T1 /. T2)]& /@ Union[vars1, vars2]]
 
 (* ? module end *)
@@ -155,9 +154,10 @@ Print@{exp@vect[a * sampleR[x, y]], exp@vect[b * sampleR[x, y]], exp@vect[a * sa
 Print@{
   exp@vect[a * vect@(d[x])],
   exp@vect[b * vect@(x d[x])],
+  exp@vect[c * vect@(d[x])],
   exp@vect[a * vect@(d[x])] \[SmallCircle] exp@vect[b * vect@(x d[x])],
-  exp@vect[b * vect@(x d[x])] \[SmallCircle] exp@vect[a * vect@(d[x])]
-  (* exp@vect[b * vect@(x d[x])] \[SmallCircle] exp@vect[a * vect@(d[x])] \[SmallCircle] exp@vect[b * vect@(x d[x])] *)
+  exp@vect[b * vect@(x d[x])] \[SmallCircle] exp@vect[a * vect@(d[x])],
+  exp@vect[a * vect@(d[x])] \[SmallCircle] exp@vect[b * vect@(x d[x])] \[SmallCircle] exp@vect[c * vect@(d[x])]
 }
 (* ** *)
 
